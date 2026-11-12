@@ -267,6 +267,24 @@
         .settings-actions {
             margin-top: 16px;
         }
+
+        .key-input {
+            flex: 1;
+            min-width: 0;
+            background-color: #0f172a;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font: inherit;
+            font-size: 0.85rem;
+        }
+
+        .key-block {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -366,6 +384,16 @@
     </main>
 
     <main class="card hidden" id="settingsView">
+        <div class="key-block">
+            <p class="settings-note">The key stays in this browser only.</p>
+            <div class="settings-row">
+                <div class="relay-title">AIO key</div>
+                <input id="aioKeyInput" class="key-input" type="text" autocomplete="off" spellcheck="false" placeholder="aio_...">
+            </div>
+            <div class="settings-actions">
+                <button class="btn-blue" onclick="saveAioKey()">Save key</button>
+            </div>
+        </div>
         <p class="settings-note">Disabled inputs are held low, so an unwired pin cannot trigger a relay. Each touch can toggle any relay.</p>
         <div class="settings-row">
             <div>
@@ -430,10 +458,12 @@
 </div>
 
 <script>
-    // System Config Hardcoded with your credentials
     const USERNAME = "naguibamged";
-    const AIO_KEY = "aio_wGFv77ewUxFo51DAWVo9LudsXwBh";
     const FEED_KEY = "control1"; // Lowercase feed key required by Adafruit IO REST API
+    const AIO_STORAGE_KEY = "aioKey";
+
+    let AIO_KEY = localStorage.getItem(AIO_STORAGE_KEY) || "";
+    let keyMissingLogged = false;
 
     const RELAYS = ["r1", "r2", "r3", "r4"];
     const MAX_TIMER_SECONDS = 86400;
@@ -480,7 +510,32 @@
         return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
     }
 
+    function requireAioKey() {
+        if (AIO_KEY) return true;
+        setOnlineStatus(false);
+        if (!keyMissingLogged) {
+            log("Paste your AIO key in Settings", "error");
+            keyMissingLogged = true;
+        }
+        return false;
+    }
+
+    function saveAioKey() {
+        AIO_KEY = document.getElementById("aioKeyInput").value.trim();
+        localStorage.setItem(AIO_STORAGE_KEY, AIO_KEY);
+        if (AIO_KEY) {
+            keyMissingLogged = false;
+            log("AIO key saved in this browser", "success");
+            requestSnapshot();
+            return;
+        }
+        keyMissingLogged = false;
+        log("AIO key cleared", "error");
+        setOnlineStatus(false);
+    }
+
     async function postPayload(fields) {
+        if (!requireAioKey()) return false;
         try {
             const response = await fetch(feedUrl("/data"), {
                 method: "POST",
@@ -508,6 +563,7 @@
     }
 
     async function getLast() {
+        if (!requireAioKey()) return null;
         try {
             const response = await fetch(feedUrl("/data/last"), {
                 headers: { "X-AIO-Key": AIO_KEY }
@@ -567,6 +623,9 @@
     function toggleView() {
         const settings = document.getElementById("settingsView");
         const showingSettings = settings.classList.contains("hidden");
+        if (showingSettings) {
+            document.getElementById("aioKeyInput").value = AIO_KEY;
+        }
         settings.classList.toggle("hidden", !showingSettings);
         document.getElementById("controlView").classList.toggle("hidden", showingSettings);
         document.getElementById("viewToggle").innerText = showingSettings ? "Control" : "Settings";
@@ -631,6 +690,7 @@
     }
 
     async function requestSnapshot() {
+        if (!requireAioKey()) return;
         log("Requesting device snapshot...");
         const before = await getLast();
         const beforeId = before ? dataIdentity(before) : null;
