@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adafruit IO 4-Relay Control Panel</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --accent-green: #22c55e;
+            --accent-green-hover: #16a34a;
+            --accent-red: #ef4444;
+            --accent-red-hover: #dc2626;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 640px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            background-color: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+        }
+
+        .status-badge.online .status-dot {
+            background-color: var(--accent-green);
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .master-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-green {
+            background-color: var(--accent-green);
+            color: white;
+        }
+        .btn-green:hover { background-color: var(--accent-green-hover); }
+
+        .btn-red {
+            background-color: var(--accent-red);
+            color: white;
+        }
+        .btn-red:hover { background-color: var(--accent-red-hover); }
+
+        .btn-blue {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+            color: white;
+        }
+        .btn-secondary:hover { background-color: #334155; }
+
+        .relay-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .relay-card {
+            background-color: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .relay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relay-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .relay-toggle {
+            padding: 8px 24px;
+            font-size: 1rem;
+            min-width: 90px;
+        }
+
+        .timer-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px dashed var(--border-color);
+            padding-top: 10px;
+        }
+
+        .timer-input {
+            width: 76px;
+            background-color: #0f172a;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font: inherit;
+            font-size: 0.8rem;
+        }
+
+        .timer-btn {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            background-color: #334155;
+            color: var(--text-main);
+            border-radius: 6px;
+        }
+
+        .timer-btn:hover {
+            background-color: #475569;
+        }
+
+        .log-box {
+            font-family: monospace;
+            font-size: 0.8rem;
+            background-color: #090d16;
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 8px;
+            max-height: 140px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+        .log-entry.error { color: var(--accent-red); }
+        .log-entry.success { color: var(--accent-green); }
+
+        .settings-note {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .gpio-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .touch-select {
+            background-color: #0f172a;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font: inherit;
+            font-size: 0.85rem;
+        }
+
+        .settings-actions {
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>ESP32-C3 Control Panel</h1>
+        <div class="header-actions">
+            <button id="viewToggle" class="btn-secondary header-btn" onclick="toggleView()">Settings</button>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="card" id="controlView">
+        <div class="master-controls">
+            <button class="btn-green" onclick="setAllRelays(1)">ALL ON</button>
+            <button class="btn-red" onclick="setAllRelays(0)">ALL OFF</button>
+            <button class="btn-secondary" onclick="requestSnapshot()">RELOAD</button>
+        </div>
+
+        <div class="relay-grid">
+            <!-- Relay 1 -->
+            <div class="relay-card">
+                <div class="relay-header">
+                    <span class="relay-title">Relay 1</span>
+                    <button id="btn-r1" class="relay-toggle btn-red" onclick="toggleRelay('r1')">OFF</button>
+                </div>
+                <div class="timer-controls">
+                    <span>Timer (s):</span>
+                    <input id="timer-input-r1" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
+                    <button class="timer-btn" onclick="startCustomTimer('r1')">Start</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r1', 10)">10s</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r1', 60)">1m</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r1', 300)">5m</button>
+                    <button class="timer-btn" onclick="cancelTimer('r1')">Cancel</button>
+                    <span id="timer-display-r1" style="margin-left: auto; color: var(--accent-blue);"></span>
+                </div>
+            </div>
+
+            <!-- Relay 2 -->
+            <div class="relay-card">
+                <div class="relay-header">
+                    <span class="relay-title">Relay 2</span>
+                    <button id="btn-r2" class="relay-toggle btn-red" onclick="toggleRelay('r2')">OFF</button>
+                </div>
+                <div class="timer-controls">
+                    <span>Timer (s):</span>
+                    <input id="timer-input-r2" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
+                    <button class="timer-btn" onclick="startCustomTimer('r2')">Start</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r2', 10)">10s</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r2', 60)">1m</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r2', 300)">5m</button>
+                    <button class="timer-btn" onclick="cancelTimer('r2')">Cancel</button>
+                    <span id="timer-display-r2" style="margin-left: auto; color: var(--accent-blue);"></span>
+                </div>
+            </div>
+
+            <!-- Relay 3 -->
+            <div class="relay-card">
+                <div class="relay-header">
+                    <span class="relay-title">Relay 3</span>
+                    <button id="btn-r3" class="relay-toggle btn-red" onclick="toggleRelay('r3')">OFF</button>
+                </div>
+                <div class="timer-controls">
+                    <span>Timer (s):</span>
+                    <input id="timer-input-r3" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
+                    <button class="timer-btn" onclick="startCustomTimer('r3')">Start</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r3', 10)">10s</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r3', 60)">1m</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r3', 300)">5m</button>
+                    <button class="timer-btn" onclick="cancelTimer('r3')">Cancel</button>
+                    <span id="timer-display-r3" style="margin-left: auto; color: var(--accent-blue);"></span>
+                </div>
+            </div>
+
+            <!-- Relay 4 -->
+            <div class="relay-card">
+                <div class="relay-header">
+                    <span class="relay-title">Relay 4</span>
+                    <button id="btn-r4" class="relay-toggle btn-red" onclick="toggleRelay('r4')">OFF</button>
+                </div>
+                <div class="timer-controls">
+                    <span>Timer (s):</span>
+                    <input id="timer-input-r4" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
+                    <button class="timer-btn" onclick="startCustomTimer('r4')">Start</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r4', 10)">10s</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r4', 60)">1m</button>
+                    <button class="timer-btn" onclick="startPresetTimer('r4', 300)">5m</button>
+                    <button class="timer-btn" onclick="cancelTimer('r4')">Cancel</button>
+                    <span id="timer-display-r4" style="margin-left: auto; color: var(--accent-blue);"></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main class="card hidden" id="settingsView">
+        <p class="settings-note">Disabled inputs are held low, so an unwired pin cannot trigger a relay. Each touch can toggle any relay.</p>
+        <div class="settings-row">
+            <div>
+                <div class="relay-title">Touch 1</div>
+                <div class="gpio-label">GPIO 2</div>
+            </div>
+            <select id="touch-map-0" class="touch-select" onchange="onTouchSelectChange()">
+                <option value="0">Disabled</option>
+                <option value="1">Relay 1</option>
+                <option value="2">Relay 2</option>
+                <option value="3">Relay 3</option>
+                <option value="4">Relay 4</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <div>
+                <div class="relay-title">Touch 2</div>
+                <div class="gpio-label">GPIO 4</div>
+            </div>
+            <select id="touch-map-1" class="touch-select" onchange="onTouchSelectChange()">
+                <option value="0">Disabled</option>
+                <option value="1">Relay 1</option>
+                <option value="2">Relay 2</option>
+                <option value="3">Relay 3</option>
+                <option value="4">Relay 4</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <div>
+                <div class="relay-title">Touch 3</div>
+                <div class="gpio-label">GPIO 6</div>
+            </div>
+            <select id="touch-map-2" class="touch-select" onchange="onTouchSelectChange()">
+                <option value="0">Disabled</option>
+                <option value="1">Relay 1</option>
+                <option value="2">Relay 2</option>
+                <option value="3">Relay 3</option>
+                <option value="4">Relay 4</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <div>
+                <div class="relay-title">Touch 4</div>
+                <div class="gpio-label">GPIO 7</div>
+            </div>
+            <select id="touch-map-3" class="touch-select" onchange="onTouchSelectChange()">
+                <option value="0">Disabled</option>
+                <option value="1">Relay 1</option>
+                <option value="2">Relay 2</option>
+                <option value="3">Relay 3</option>
+                <option value="4">Relay 4</option>
+            </select>
+        </div>
+        <div class="settings-actions">
+            <button class="btn-blue" onclick="saveTouchSettings()">Save</button>
+        </div>
+    </main>
+
+    <div class="log-box" id="logBox">
+        <div class="log-entry">System ready. Timers run on the ESP; this page counts down from one snapshot.</div>
+    </div>
+</div>
+
+<script>
+    // System Config Hardcoded with your credentials
+    const USERNAME = "naguibamged";
+    const AIO_KEY = "aio_kheR529mELbroEgkMqxbm0iwCZBx";
+    const FEED_KEY = "control1"; // Lowercase feed key required by Adafruit IO REST API
+
+    const RELAYS = ["r1", "r2", "r3", "r4"];
+    const MAX_TIMER_SECONDS = 86400;
+
+    let currentStates = { r1: 0, r2: 0, r3: 0, r4: 0 };
+    let deadlines = { r1: 0, r2: 0, r3: 0, r4: 0 };
+    let lastAppliedId = null;
+    let touchMap = [0, 0, 0, 0];
+    let settingsDirty = false;
+    let fillingTouch = false;
+
+    function log(message, type = 'info') {
+        const logBox = document.getElementById('logBox');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.innerText = `[${time}] ${message}`;
+        logBox.appendChild(entry);
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function feedUrl(path) {
+        return `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${FEED_KEY}${path}`;
+    }
+
+    function dataIdentity(data) {
+        if (data.id != null) return String(data.id);
+        return data.created_at || null;
+    }
+
+    function timerKey(relay) {
+        return `t${relay.slice(1)}`;
+    }
+
+    function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function formatLeft(ms) {
+        const total = Math.max(0, Math.ceil(ms / 1000));
+        const minutes = Math.floor(total / 60);
+        const seconds = total % 60;
+        if (minutes <= 0) return `${seconds}s`;
+        return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+    }
+
+    async function postPayload(fields) {
+        try {
+            const response = await fetch(feedUrl("/data"), {
+                method: "POST",
+                headers: {
+                    "X-AIO-Key": AIO_KEY,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ value: JSON.stringify(fields) })
+            });
+
+            if (response.ok) {
+                log(`Sent: ${JSON.stringify(fields)}`, 'success');
+                setOnlineStatus(true);
+                return true;
+            }
+
+            const err = await response.text();
+            log(`HTTP ${response.status} Error: ${err}`, 'error');
+            setOnlineStatus(false);
+        } catch (error) {
+            log(`Network Error: ${error.message}`, 'error');
+            setOnlineStatus(false);
+        }
+        return false;
+    }
+
+    async function getLast() {
+        try {
+            const response = await fetch(feedUrl("/data/last"), {
+                headers: { "X-AIO-Key": AIO_KEY }
+            });
+
+            if (!response.ok) {
+                log(`Failed to fetch latest state: HTTP ${response.status}`, 'error');
+                setOnlineStatus(false);
+                return null;
+            }
+
+            setOnlineStatus(true);
+            const data = await response.json();
+            if (!data || !data.value) return null;
+            return data;
+        } catch (error) {
+            log(`Failed to reach Adafruit IO: ${error.message}`, 'error');
+            setOnlineStatus(false);
+            return null;
+        }
+    }
+
+    function applyRelayFields(parsed) {
+        for (const key of RELAYS) {
+            if (parsed[key] === 0 || parsed[key] === 1) {
+                currentStates[key] = parsed[key];
+            }
+        }
+    }
+
+    function applyDeviceSnapshot(parsed, createdMs) {
+        applyRelayFields(parsed);
+        const ageSec = Number.isFinite(createdMs) ? (Date.now() - createdMs) / 1000 : 0;
+
+        for (const key of RELAYS) {
+            const published = parsed[timerKey(key)];
+            if (typeof published !== "number") continue;
+            const left = published - ageSec;
+            if (parsed[key] === 0 || left <= 0.5) {
+                deadlines[key] = 0;
+            } else {
+                deadlines[key] = Date.now() + left * 1000;
+            }
+        }
+
+        if (settingsDirty || !Array.isArray(parsed.touch) || parsed.touch.length < 4) {
+            return;
+        }
+
+        touchMap = parsed.touch.slice(0, 4).map((value) => {
+            const relay = Number(value);
+            return relay >= 1 && relay <= 4 ? relay : 0;
+        });
+        fillTouchSelects();
+    }
+
+    function toggleView() {
+        const settings = document.getElementById("settingsView");
+        const showingSettings = settings.classList.contains("hidden");
+        settings.classList.toggle("hidden", !showingSettings);
+        document.getElementById("controlView").classList.toggle("hidden", showingSettings);
+        document.getElementById("viewToggle").innerText = showingSettings ? "Control" : "Settings";
+    }
+
+    function fillTouchSelects() {
+        fillingTouch = true;
+        for (let i = 0; i < touchMap.length; i++) {
+            const select = document.getElementById(`touch-map-${i}`);
+            if (select) select.value = String(touchMap[i]);
+        }
+        fillingTouch = false;
+    }
+
+    function onTouchSelectChange() {
+        if (fillingTouch) return;
+        settingsDirty = true;
+    }
+
+    function saveTouchSettings() {
+        const next = [];
+        for (let i = 0; i < 4; i++) {
+            const relay = Number(document.getElementById(`touch-map-${i}`).value);
+            next.push(relay >= 1 && relay <= 4 ? relay : 0);
+        }
+        touchMap = next;
+        settingsDirty = false;
+        postPayload({ touch: next });
+        log(`Touch map sent: ${JSON.stringify(next)}`);
+    }
+
+    function applyFeed(data) {
+        const id = dataIdentity(data);
+        if (id && id === lastAppliedId) return false;
+
+        let parsed;
+        try {
+            parsed = JSON.parse(data.value);
+        } catch (error) {
+            log("Feed value is not JSON", 'error');
+            return false;
+        }
+
+        if (id) lastAppliedId = id;
+
+        if (parsed.src === "d") {
+            applyDeviceSnapshot(parsed, Date.parse(data.created_at));
+            updateUI();
+            refreshCountdownLabels();
+            log(`Device snapshot: ${data.value}`, 'success');
+            return true;
+        }
+
+        applyRelayFields(parsed);
+        updateUI();
+        return false;
+    }
+
+    async function fetchCloudState() {
+        const data = await getLast();
+        if (data) applyFeed(data);
+    }
+
+    async function requestSnapshot() {
+        log("Requesting device snapshot...");
+        const before = await getLast();
+        const beforeId = before ? dataIdentity(before) : null;
+        if (before) applyFeed(before);
+
+        const posted = await postPayload({ q: 1 });
+        if (!posted) return;
+
+        for (let attempt = 0; attempt < 6; attempt++) {
+            await delay(attempt === 0 ? 500 : 800);
+            const data = await getLast();
+            if (!data || dataIdentity(data) === beforeId) continue;
+
+            let parsed;
+            try {
+                parsed = JSON.parse(data.value);
+            } catch (error) {
+                continue;
+            }
+
+            if (parsed.src === "d") {
+                applyFeed(data);
+                return;
+            }
+        }
+
+        log("Snapshot not received yet. State will update on the next poll.", 'error');
+    }
+
+    function toggleRelay(relay) {
+        const next = currentStates[relay] === 1 ? 0 : 1;
+        currentStates[relay] = next;
+        deadlines[relay] = 0;
+        updateUI();
+        refreshCountdownLabels();
+
+        const payload = {};
+        payload[relay] = next;
+        payload[timerKey(relay)] = 0;
+        postPayload(payload);
+    }
+
+    function setAllRelays(val) {
+        const payload = {};
+        for (const key of RELAYS) {
+            currentStates[key] = val;
+            deadlines[key] = 0;
+            payload[key] = val;
+            payload[timerKey(key)] = 0;
+        }
+        updateUI();
+        refreshCountdownLabels();
+        postPayload(payload);
+    }
+
+    function startTimer(relay, seconds) {
+        seconds = Math.floor(Number(seconds));
+        if (!Number.isFinite(seconds) || seconds < 1) {
+            log(`Enter a timer between 1 and ${MAX_TIMER_SECONDS} seconds`, 'error');
+            return;
+        }
+        if (seconds > MAX_TIMER_SECONDS) seconds = MAX_TIMER_SECONDS;
+
+        currentStates[relay] = 1;
+        deadlines[relay] = Date.now() + seconds * 1000;
+        updateUI();
+        refreshCountdownLabels();
+
+        const payload = {};
+        payload[relay] = 1;
+        payload[timerKey(relay)] = seconds;
+        postPayload(payload);
+        log(`Timer sent: ${relay} turns OFF in ${seconds}s`);
+    }
+
+    function startCustomTimer(relay) {
+        const input = document.getElementById(`timer-input-${relay}`);
+        startTimer(relay, input.value);
+    }
+
+    function startPresetTimer(relay, seconds) {
+        startTimer(relay, seconds);
+    }
+
+    function cancelTimer(relay) {
+        deadlines[relay] = 0;
+        refreshCountdownLabels();
+        const payload = {};
+        payload[timerKey(relay)] = 0;
+        postPayload(payload);
+        log(`Timer cancelled: ${relay}`);
+    }
+
+    function refreshCountdownLabels() {
+        const now = Date.now();
+        let relaysChanged = false;
+
+        for (const key of RELAYS) {
+            const display = document.getElementById(`timer-display-${key}`);
+            const deadline = deadlines[key];
+            if (!deadline || deadline <= now) {
+                if (deadline && deadline <= now) {
+                    deadlines[key] = 0;
+                    if (currentStates[key] !== 0) {
+                        currentStates[key] = 0;
+                        relaysChanged = true;
+                    }
+                }
+                display.innerText = "";
+            } else {
+                display.innerText = formatLeft(deadline - now);
+            }
+        }
+
+        if (relaysChanged) updateUI();
+    }
+
+    function updateUI() {
+        for (let i = 1; i <= 4; i++) {
+            const key = `r${i}`;
+            const btn = document.getElementById(`btn-${key}`);
+            if (currentStates[key] === 1) {
+                btn.innerText = "ON";
+                btn.className = "relay-toggle btn-green";
+            } else {
+                btn.innerText = "OFF";
+                btn.className = "relay-toggle btn-red";
+            }
+        }
+    }
+
+    function setOnlineStatus(online) {
+        const badge = document.getElementById('statusBadge');
+        const text = document.getElementById('statusText');
+        if (online) {
+            badge.className = "status-badge online";
+            text.innerText = "Connected";
+        } else {
+            badge.className = "status-badge";
+            text.innerText = "Offline / Error";
+        }
+    }
+
+    // One device snapshot on load. The 10s poll only reads; the countdown is local.
+    requestSnapshot();
+    setInterval(fetchCloudState, 10000);
+    setInterval(refreshCountdownLabels, 1000);
+</script>
+
+</body>
+</html>
