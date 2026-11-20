@@ -938,6 +938,7 @@
     const USERNAME = "naguibamged";
     const FEED_KEY = "control1";
     const AIO_STORAGE_KEY = "aioKey";
+    const VIEW_STORAGE_KEY = "homeView";
     const DEVICES = ["r1", "r2"];
 
     let AIO_KEY = localStorage.getItem(AIO_STORAGE_KEY) || "";
@@ -953,6 +954,24 @@
     let settingsDirty = false;
     let fillingTouch = false;
     let roomOpen = false;
+    let viewState = { tab: "dash", map: "2d", roomOpen: false };
+
+    function readView() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || "");
+            if (!parsed || typeof parsed !== "object") return;
+            if (parsed.tab === "dash" || parsed.tab === "map") viewState.tab = parsed.tab;
+            if (parsed.map === "2d" || parsed.map === "3d") viewState.map = parsed.map;
+            if (typeof parsed.roomOpen === "boolean") viewState.roomOpen = parsed.roomOpen;
+        } catch (error) {
+            viewState = { tab: "dash", map: "2d", roomOpen: false };
+        }
+    }
+
+    function saveView() {
+        viewState.roomOpen = roomOpen;
+        localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(viewState));
+    }
 
     function log(message, type = "info") {
         const logBox = document.getElementById("logBox");
@@ -1100,25 +1119,34 @@
     }
 
     function showTab(tab) {
-        const dash = tab === "dash";
+        const dash = tab !== "map";
+        viewState.tab = dash ? "dash" : "map";
         document.getElementById("dashboardView").classList.toggle("hidden", !dash);
         document.getElementById("mapView").classList.toggle("hidden", dash);
         document.getElementById("tabDash").classList.toggle("active", dash);
         document.getElementById("tabMap").classList.toggle("active", !dash);
+        saveView();
     }
 
     function showMapMode(mode) {
-        const flat = mode === "2d";
+        const flat = mode !== "3d";
+        viewState.map = flat ? "2d" : "3d";
         document.getElementById("map2d").classList.toggle("hidden", !flat);
         document.getElementById("map3d").classList.toggle("hidden", flat);
         document.getElementById("mode2d").classList.toggle("active", flat);
         document.getElementById("mode3d").classList.toggle("active", !flat);
+        saveView();
+    }
+
+    function setRoomOpen(open) {
+        roomOpen = Boolean(open);
+        document.getElementById("roomCard").classList.toggle("open", roomOpen);
+        document.getElementById("roomToggle").setAttribute("aria-expanded", roomOpen ? "true" : "false");
+        saveView();
     }
 
     function toggleRoom() {
-        roomOpen = !roomOpen;
-        document.getElementById("roomCard").classList.toggle("open", roomOpen);
-        document.getElementById("roomToggle").setAttribute("aria-expanded", roomOpen ? "true" : "false");
+        setRoomOpen(!roomOpen);
     }
 
     function openSettings() {
@@ -1361,6 +1389,11 @@
         if (event.key === "Escape") closeSettings();
     });
 
+    readView();
+    roomOpen = viewState.roomOpen;
+    showTab(viewState.tab);
+    showMapMode(viewState.map);
+    setRoomOpen(viewState.roomOpen);
     updateUI();
     setOnlineStatus(false);
     requestSnapshot();
