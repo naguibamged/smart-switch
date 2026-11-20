@@ -3,464 +3,942 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adafruit IO 4-Relay Control Panel</title>
+    <title>My home</title>
     <style>
         :root {
-            --bg-primary: #0f172a;
-            --bg-card: #1e293b;
-            --bg-card-hover: #334155;
-            --accent-green: #22c55e;
-            --accent-green-hover: #16a34a;
-            --accent-red: #ef4444;
-            --accent-red-hover: #dc2626;
-            --accent-blue: #3b82f6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
+            --bg: #000;
+            --card: #1c1c1e;
+            --card-2: #2a2a2e;
+            --line: rgba(255, 255, 255, 0.08);
+            --text: #f5f5f7;
+            --muted: #8e8e93;
+            --blue: #2f80ff;
+            --blue-2: #1d65d8;
+            --warm: #f5c451;
+            --floor: #31443b;
+            --floor-lit: #e0b15a;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        button, input, select { font: inherit; color: inherit; }
+
+        button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            padding: 24px 16px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", system-ui, sans-serif;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
         }
 
-        .app-container {
+        .app {
             width: 100%;
-            max-width: 640px;
+            max-width: 440px;
+            min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            position: relative;
         }
 
-        header {
+        .topbar {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+            padding: 14px 16px 6px;
         }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .brand svg { display: block; }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .header-btn {
-            padding: 6px 12px;
-            font-size: 0.8rem;
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 0.75rem;
+            background: var(--card);
+            border-radius: 999px;
+            padding: 6px 10px;
         }
 
-        .hidden {
-            display: none;
+        .status-pill.online { color: #b7f7c8; }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #666;
         }
 
-        h1 {
-            font-size: 1.35rem;
-            font-weight: 700;
+        .status-pill.online .status-dot { background: #34c759; }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--card-2);
+            display: grid;
+            place-items: center;
+            color: var(--text);
         }
 
-        .status-badge {
+        main {
+            flex: 1;
+            padding: 8px 16px 12px;
+        }
+
+        .hidden { display: none !important; }
+
+        .chips {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .chip {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.85rem;
-            padding: 4px 12px;
-            border-radius: 9999px;
-            background-color: rgba(148, 163, 184, 0.1);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--text-muted);
-        }
-
-        .status-badge.online .status-dot {
-            background-color: var(--accent-green);
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .master-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            font-family: inherit;
+            background: var(--card);
+            border-radius: 999px;
+            padding: 10px 14px;
+            color: var(--muted);
             font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        .chip.is-on { color: var(--text); }
+        .chip.is-on.light { color: var(--warm); }
+
+        .key-hint {
+            width: 100%;
+            text-align: left;
+            background: #1a2744;
+            color: #d6e6ff;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
             font-size: 0.9rem;
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        button:active {
-            transform: scale(0.97);
+        .room-card {
+            background: var(--card);
+            border-radius: 22px;
+            overflow: hidden;
         }
 
-        .btn-green {
-            background-color: var(--accent-green);
-            color: white;
-        }
-        .btn-green:hover { background-color: var(--accent-green-hover); }
-
-        .btn-red {
-            background-color: var(--accent-red);
-            color: white;
-        }
-        .btn-red:hover { background-color: var(--accent-red-hover); }
-
-        .btn-blue {
-            background-color: var(--accent-blue);
-            color: white;
-        }
-
-        .btn-secondary {
-            background-color: #475569;
-            color: white;
-        }
-        .btn-secondary:hover { background-color: #334155; }
-
-        .relay-grid {
+        .room-head {
+            width: 100%;
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .relay-card {
-            background-color: rgba(15, 23, 42, 0.4);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .relay-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 16px 14px;
+            text-align: left;
         }
 
-        .relay-title {
-            font-size: 1.05rem;
-            font-weight: 600;
+        .room-copy { display: flex; flex-direction: column; align-items: flex-start; }
+
+        .room-name { font-size: 1.05rem; font-weight: 700; }
+
+        .room-sub {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-top: 3px;
         }
 
-        .relay-toggle {
-            padding: 8px 24px;
-            font-size: 1rem;
-            min-width: 90px;
+        .room-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .brief-ico {
+            display: none;
+            width: 22px;
+            height: 22px;
+            color: var(--warm);
+            place-items: center;
+        }
+
+        .brief-ico.show { display: grid; }
+        #icon-fan.show { color: #d7ecff; }
+
+        .chevron {
+            width: 18px;
+            height: 18px;
+            color: var(--muted);
+            transition: transform 0.2s ease;
+        }
+
+        .room-card.open .chevron { transform: rotate(180deg); }
+
+        .room-body { display: none; padding: 0 10px 10px; }
+        .room-card.open .room-body { display: block; }
+
+        .device {
+            background: #141416;
+            border-radius: 16px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .device-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .d-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #2a2a2e;
+            display: grid;
+            place-items: center;
+            color: var(--muted);
+            flex: none;
+        }
+
+        .device-row.is-on .d-icon.light { color: var(--warm); background: #3a2e12; }
+        .device-row.is-on .d-icon.fan { color: #d7ecff; background: #1a2836; }
+
+        .d-copy { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+        .d-name { font-weight: 650; font-size: 0.98rem; }
+        .d-state { color: var(--muted); font-size: 0.8rem; }
+        .device-row.is-on .d-state { color: #9ec0ff; }
+
+        .knob {
+            width: 46px;
+            height: 28px;
+            border-radius: 99px;
+            background: #3a3a3c;
+            position: relative;
+            flex: none;
+        }
+
+        .knob::after {
+            content: "";
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s ease;
+        }
+
+        .device-row.is-on .knob { background: var(--blue); }
+        .device-row.is-on .knob::after { transform: translateX(18px); }
 
         .timer-controls {
             display: flex;
-            align-items: center;
             flex-wrap: wrap;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            border-top: 1px dashed var(--border-color);
-            padding-top: 10px;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px 12px 64px;
+            color: var(--muted);
+            font-size: 0.75rem;
         }
 
         .timer-input {
-            width: 76px;
-            background-color: #0f172a;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 4px 8px;
-            font: inherit;
-            font-size: 0.8rem;
+            width: 64px;
+            background: #0c0c0e;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 6px 8px;
         }
 
         .timer-btn {
-            padding: 4px 10px;
+            background: var(--card-2);
+            border-radius: 8px;
+            padding: 6px 8px;
+            color: var(--text);
             font-size: 0.75rem;
-            background-color: #334155;
-            color: var(--text-main);
-            border-radius: 6px;
         }
 
-        .timer-btn:hover {
-            background-color: #475569;
+        .timer-left {
+            margin-left: auto;
+            color: #9ec0ff;
+            min-height: 1em;
         }
+
+        .map-head {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 8px;
+        }
+
+        .seg {
+            display: flex;
+            background: var(--card);
+            border-radius: 999px;
+            padding: 3px;
+        }
+
+        .seg button {
+            min-width: 46px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            color: var(--muted);
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+
+        .seg button.active {
+            background: var(--card-2);
+            color: white;
+        }
+
+        .plan {
+            position: relative;
+            background: #070708;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .plan svg { width: 100%; height: auto; display: block; }
+
+        .ghost-label { fill: #6a6a70; font-size: 11px; font-family: inherit; }
+        .active-label { fill: #f2f2f4; font-size: 13px; font-weight: 700; font-family: inherit; }
+        .wall { stroke: #5c5c62; stroke-width: 7; stroke-linecap: square; }
+        .ghost-floor { fill: #1a1a1d; }
+        .active-floor { fill: var(--floor); transition: fill 0.45s ease; }
+        .room-glow { opacity: 0; transition: opacity 0.45s ease; }
+        .lit .active-floor { fill: #6e5a34; }
+        .lit .room-glow { opacity: 1; }
+
+        .led-bar {
+            position: absolute;
+            z-index: 3;
+            width: 42%;
+            height: 14px;
+            padding: 3px 4px;
+            border: none;
+            border-radius: 4px;
+            background: linear-gradient(#3a3a3e, #161618);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 3px 8px rgba(0, 0, 0, 0.4);
+            transform: translate(-50%, -50%);
+            display: block;
+        }
+
+        .led-strip {
+            display: block;
+            height: 100%;
+            border-radius: 2px;
+            background: #3c3c40;
+        }
+
+        .led-bar.is-on {
+            background: #141416;
+            box-shadow: 0 -16px 28px rgba(255, 236, 190, 0.55), inset 0 0 0 1px rgba(255, 250, 240, 0.35);
+        }
+
+        .led-bar.is-on .led-strip {
+            background: linear-gradient(#ffffff, #fff4d4);
+            box-shadow: 0 0 8px #fff, 0 0 16px #ffe7b0;
+        }
+
+        .pin {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #111114;
+            color: #8d8d93;
+            display: grid;
+            place-items: center;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+            z-index: 2;
+        }
+
+        .pin.light-marker.is-on {
+            color: var(--warm);
+            background: #3a2e12;
+            box-shadow: 0 0 18px rgba(245, 196, 81, 0.85);
+        }
+
+        .pin.fan-marker.is-on {
+            color: #d7ecff;
+            background: #1a2836;
+        }
+
+        .scene {
+            height: 460px;
+            display: grid;
+            place-items: center;
+            position: relative;
+            background:
+                radial-gradient(ellipse at 50% 62%, rgba(255, 255, 255, 0.05), transparent 55%),
+                #070708;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .house {
+            width: 300px;
+            height: 230px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(60deg) rotateZ(-42deg);
+        }
+
+        .slab {
+            position: absolute;
+            background: #242428;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .room {
+            position: absolute;
+            left: 0;
+            top: 84px;
+            width: 176px;
+            height: 140px;
+            transform-style: preserve-3d;
+        }
+
+        .floor {
+            position: absolute;
+            inset: 0;
+            background: #3d4a43;
+            transition: background 0.45s ease, box-shadow 0.45s ease;
+        }
+
+        .lit .floor {
+            background: linear-gradient(to top, #fff6df 0%, #f0c56e 20%, #c9843a 58%, #8d6a38 100%);
+            box-shadow: 0 0 24px rgba(255, 214, 140, 0.7);
+        }
+
+        .glow {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(255, 252, 245, 0.95) 0%, rgba(255, 220, 150, 0.38) 26%, transparent 72%);
+            opacity: 0;
+            transition: opacity 0.45s ease;
+            pointer-events: none;
+        }
+
+        .room .led-bar {
+            width: 78%;
+            height: 10px;
+            left: 50%;
+            top: auto;
+            bottom: 0;
+            transform: translate(-50%, 45%);
+        }
+
+        .lit .glow { opacity: 1; }
+
+        .wall {
+            position: absolute;
+            background: linear-gradient(#f7f7f8, #d5d5da);
+        }
+
+        .wall.back {
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 58px;
+            transform-origin: top center;
+            transform: rotateX(-90deg);
+        }
+
+        .wall.side {
+            left: 0;
+            top: 0;
+            width: 58px;
+            height: 100%;
+            transform-origin: left center;
+            transform: rotateY(90deg);
+            background: linear-gradient(#eeeef2, #c4c4ca);
+        }
+
+        .window {
+            position: absolute;
+            left: 22px;
+            right: 22px;
+            top: 16px;
+            height: 20px;
+            border-radius: 2px;
+            background: #8ec8ee;
+            opacity: 0.35;
+        }
+
+        .lit .window { background: #fff1c2; opacity: 0.9; }
+
+        .billboard {
+            position: absolute;
+            transform: rotateZ(42deg) rotateX(-60deg) translate(-50%, -50%) translateZ(36px);
+            transform-style: preserve-3d;
+        }
+
+        .scene-caption {
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            z-index: 3;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .bulb, .fan-unit, .fan-svg { width: 22px; height: 22px; }
+        .pin .bulb, .pin .fan-unit, .d-icon .bulb, .d-icon .fan-unit { width: 22px; height: 22px; }
+        .brief-ico.fan-unit { display: none; }
+        .brief-ico.fan-unit.show { display: block; }
+        .pin.fan-unit { display: grid; }
+
+        .fan-unit { position: relative; }
+        .blades { position: absolute; inset: 0; }
+        .blades i {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 7px;
+            height: 10px;
+            margin-left: -3.5px;
+            margin-top: -10px;
+            background: currentColor;
+            border-radius: 8px 8px 2px 2px;
+            transform-origin: 50% 10px;
+        }
+        .blades i:nth-child(2) { transform: rotate(120deg); }
+        .blades i:nth-child(3) { transform: rotate(240deg); }
+        .hub {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            margin: -3px 0 0 -3px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .fan-svg.spin,
+        .spin .fan-svg { animation: spin 0.85s linear infinite; transform-origin: 50% 50%; }
+        .spin .blades { animation: spin 0.85s linear infinite; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spin .blades { animation: none; }
+        }
+
+        .tabbar {
+            display: flex;
+            gap: 4px;
+            margin: 0 16px 14px;
+            background: #2a2a2e;
+            border-radius: 28px;
+            padding: 6px;
+        }
+
+        .tabbar button {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: #9a9aa1;
+            border-radius: 22px;
+            padding: 8px 0 7px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .tabbar button.active {
+            background: #3a3a40;
+            color: white;
+        }
+
+        .scrim {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 20;
+        }
+
+        .sheet {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: min(440px, 100%);
+            max-height: min(78vh, 640px);
+            overflow: auto;
+            background: #161618;
+            border-radius: 22px 22px 0 0;
+            padding: 12px 16px 24px;
+            z-index: 21;
+        }
+
+        .sheet-grab {
+            width: 42px;
+            height: 4px;
+            border-radius: 99px;
+            background: #3a3a3e;
+            margin: 0 auto 12px;
+        }
+
+        .sheet h2 { font-size: 1.05rem; margin-bottom: 8px; }
+
+        .note {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+
+        .field { margin-bottom: 12px; }
+
+        .field label, .touch-row span {
+            display: block;
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+
+        .key-input, .touch-select {
+            width: 100%;
+            background: #0c0c0e;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .touch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .touch-row .meta { color: var(--muted); font-size: 0.75rem; }
+        .touch-row .touch-select { width: auto; min-width: 140px; }
+
+        .sheet-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+        .btn-blue, .btn-quiet {
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 700;
+        }
+
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-blue:active { background: var(--blue-2); }
+        .btn-quiet { background: var(--card-2); }
 
         .log-box {
-            font-family: monospace;
-            font-size: 0.8rem;
-            background-color: #090d16;
-            color: var(--text-muted);
-            padding: 12px;
-            border-radius: 8px;
-            max-height: 140px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-        }
-
-        .log-entry {
-            margin-bottom: 4px;
-        }
-        .log-entry.error { color: var(--accent-red); }
-        .log-entry.success { color: var(--accent-green); }
-
-        .settings-note {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-        }
-
-        .settings-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .gpio-label {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-top: 2px;
-        }
-
-        .touch-select {
-            background-color: #0f172a;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font: inherit;
-            font-size: 0.85rem;
-        }
-
-        .settings-actions {
             margin-top: 16px;
+            max-height: 120px;
+            overflow: auto;
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-family: ui-monospace, monospace;
         }
 
-        .key-input {
-            flex: 1;
-            min-width: 0;
-            background-color: #0f172a;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font: inherit;
-            font-size: 0.85rem;
-        }
-
-        .key-block {
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .log-entry { padding: 2px 0; }
+        .log-entry.success { color: #86efac; }
+        .log-entry.error { color: #fca5a5; }
     </style>
 </head>
 <body>
-
-<div class="app-container">
-    <header>
-        <h1>ESP32-C3 Control Panel</h1>
+<div class="app">
+    <header class="topbar">
+        <div class="brand">
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 3.2 3 10.2V20a1 1 0 0 0 1 1h5.2v-6.2h5.6V21H20a1 1 0 0 0 1-1v-9.8L12 3.2z"/>
+            </svg>
+            My home
+        </div>
         <div class="header-actions">
-            <button id="viewToggle" class="btn-secondary header-btn" onclick="toggleView()">Settings</button>
-            <div class="status-badge" id="statusBadge">
+            <div class="status-pill" id="statusBadge">
                 <span class="status-dot"></span>
                 <span id="statusText">Connecting...</span>
             </div>
+            <button class="icon-btn" type="button" onclick="openSettings()" aria-label="Settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="5" r="1.7" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                    <circle cx="12" cy="19" r="1.7" fill="currentColor"/>
+                </svg>
+            </button>
         </div>
     </header>
 
-    <main class="card" id="controlView">
-        <div class="master-controls">
-            <button class="btn-green" onclick="setAllRelays(1)">ALL ON</button>
-            <button class="btn-red" onclick="setAllRelays(0)">ALL OFF</button>
-            <button class="btn-secondary" onclick="requestSnapshot()">RELOAD</button>
-        </div>
-
-        <div class="relay-grid">
-            <!-- Relay 1 -->
-            <div class="relay-card">
-                <div class="relay-header">
-                    <span class="relay-title">Relay 1</span>
-                    <button id="btn-r1" class="relay-toggle btn-red" onclick="toggleRelay('r1')">OFF</button>
+    <main>
+        <section id="dashboardView">
+            <div class="chips">
+                <div class="chip light" id="chip-lights">
+                    <svg class="bulb" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7c.4.5.8 1.1.9 1.8h6.2c.1-.7.5-1.3.9-1.8A7 7 0 0 0 12 2z"/>
+                        <path fill="currentColor" d="M9 18.5h6v1.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V18.5z"/>
+                    </svg>
+                    <span id="chip-lights-text">0 on</span>
                 </div>
-                <div class="timer-controls">
-                    <span>Timer (s):</span>
-                    <input id="timer-input-r1" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
-                    <button class="timer-btn" onclick="startCustomTimer('r1')">Start</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r1', 10)">10s</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r1', 60)">1m</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r1', 300)">5m</button>
-                    <button class="timer-btn" onclick="cancelTimer('r1')">Cancel</button>
-                    <span id="timer-display-r1" style="margin-left: auto; color: var(--accent-blue);"></span>
+                <div class="chip" id="chip-fan">
+                    <svg class="fan-svg" viewBox="0 0 24 24" aria-hidden="true">
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(90 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(180 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(270 12 12)"/>
+                        <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                    </svg>
+                    <span id="chip-fan-text">Off</span>
                 </div>
             </div>
 
-            <!-- Relay 2 -->
-            <div class="relay-card">
-                <div class="relay-header">
-                    <span class="relay-title">Relay 2</span>
-                    <button id="btn-r2" class="relay-toggle btn-red" onclick="toggleRelay('r2')">OFF</button>
+            <button id="keyHint" class="key-hint hidden" type="button" onclick="openSettings()">Add your AIO key to connect this home.</button>
+
+            <article class="room-card" id="roomCard">
+                <button class="room-head" type="button" onclick="toggleRoom()" aria-expanded="false" id="roomToggle">
+                    <span class="room-copy">
+                        <span class="room-name">Room</span>
+                        <span class="room-sub" id="roomBrief">All off</span>
+                    </span>
+                    <span class="room-side">
+                        <span id="icon-lights" class="brief-ico" data-light>
+                            <svg class="bulb" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7c.4.5.8 1.1.9 1.8h6.2c.1-.7.5-1.3.9-1.8A7 7 0 0 0 12 2z"/>
+                                <path fill="currentColor" d="M9 18.5h6v1.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V18.5z"/>
+                            </svg>
+                        </span>
+                        <svg id="icon-fan" class="brief-ico fan-svg" data-fan data-fan-rotor viewBox="0 0 24 24" aria-hidden="true">
+                            <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(90 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(180 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(270 12 12)"/>
+                            <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                        </svg>
+                        <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+                        </svg>
+                    </span>
+                </button>
+                <div class="room-body" id="roomBody">
+                    <div class="device">
+                        <button class="device-row" id="row-r1" type="button" onclick="toggleRelay('r1')" aria-pressed="false">
+                            <span class="d-icon light" data-light>
+                                <svg class="bulb" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill="currentColor" d="M12 2a7 7 0 0 0-4 12.7c.4.5.8 1.1.9 1.8h6.2c.1-.7.5-1.3.9-1.8A7 7 0 0 0 12 2z"/>
+                                    <path fill="currentColor" d="M9 18.5h6v1.2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V18.5z"/>
+                                </svg>
+                            </span>
+                            <span class="d-copy">
+                                <span class="d-name">Lights</span>
+                                <span class="d-state" id="state-r1">Off</span>
+                            </span>
+                            <span class="knob" aria-hidden="true"></span>
+                        </button>
+                        <div class="timer-controls">
+                            <span>Off in</span>
+                            <input id="timer-input-r1" class="timer-input" type="number" min="1" max="86400" placeholder="sec" aria-label="Lights timer seconds">
+                            <button class="timer-btn" type="button" onclick="startCustomTimer('r1')">Start</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 10)">10s</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 60)">1m</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 300)">5m</button>
+                            <button class="timer-btn" type="button" onclick="cancelTimer('r1')">Cancel</button>
+                            <span id="timer-display-r1" class="timer-left"></span>
+                        </div>
+                    </div>
+                    <div class="device">
+                        <button class="device-row" id="row-r2" type="button" onclick="toggleRelay('r2')" aria-pressed="false">
+                            <span class="d-icon fan">
+                                <svg class="fan-svg" data-fan data-fan-rotor viewBox="0 0 24 24" aria-hidden="true">
+                                    <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(90 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(180 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(270 12 12)"/>
+                                    <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="d-copy">
+                                <span class="d-name">Ceiling fan</span>
+                                <span class="d-state" id="state-r2">Off</span>
+                            </span>
+                            <span class="knob" aria-hidden="true"></span>
+                        </button>
+                        <div class="timer-controls">
+                            <span>Off in</span>
+                            <input id="timer-input-r2" class="timer-input" type="number" min="1" max="86400" placeholder="sec" aria-label="Ceiling fan timer seconds">
+                            <button class="timer-btn" type="button" onclick="startCustomTimer('r2')">Start</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 10)">10s</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 60)">1m</button>
+                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 300)">5m</button>
+                            <button class="timer-btn" type="button" onclick="cancelTimer('r2')">Cancel</button>
+                            <span id="timer-display-r2" class="timer-left"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="timer-controls">
-                    <span>Timer (s):</span>
-                    <input id="timer-input-r2" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
-                    <button class="timer-btn" onclick="startCustomTimer('r2')">Start</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r2', 10)">10s</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r2', 60)">1m</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r2', 300)">5m</button>
-                    <button class="timer-btn" onclick="cancelTimer('r2')">Cancel</button>
-                    <span id="timer-display-r2" style="margin-left: auto; color: var(--accent-blue);"></span>
+            </article>
+        </section>
+
+        <section id="mapView" class="hidden">
+            <div class="map-head">
+                <div class="seg" role="tablist" aria-label="Map style">
+                    <button id="mode2d" class="active" type="button" onclick="showMapMode('2d')">2D</button>
+                    <button id="mode3d" type="button" onclick="showMapMode('3d')">3D</button>
                 </div>
             </div>
 
-            <!-- Relay 3 -->
-            <div class="relay-card">
-                <div class="relay-header">
-                    <span class="relay-title">Relay 3</span>
-                    <button id="btn-r3" class="relay-toggle btn-red" onclick="toggleRelay('r3')">OFF</button>
-                </div>
-                <div class="timer-controls">
-                    <span>Timer (s):</span>
-                    <input id="timer-input-r3" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
-                    <button class="timer-btn" onclick="startCustomTimer('r3')">Start</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r3', 10)">10s</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r3', 60)">1m</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r3', 300)">5m</button>
-                    <button class="timer-btn" onclick="cancelTimer('r3')">Cancel</button>
-                    <span id="timer-display-r3" style="margin-left: auto; color: var(--accent-blue);"></span>
-                </div>
+            <div class="plan" id="map2d">
+                <svg viewBox="0 0 340 280" role="img" aria-label="Home map. Only Room is active.">
+                    <rect class="ghost-floor" x="24" y="24" width="104" height="92"/>
+                    <rect class="ghost-floor" x="132" y="24" width="96" height="92"/>
+                    <rect class="ghost-floor" x="232" y="24" width="84" height="232"/>
+                    <defs>
+                        <linearGradient id="wallWash" x1="0" y1="1" x2="0" y2="0">
+                            <stop offset="0%" stop-color="#fff8e8" stop-opacity="0.95"/>
+                            <stop offset="28%" stop-color="#f3cf86" stop-opacity="0.72"/>
+                            <stop offset="100%" stop-color="#e0b15a" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <rect class="active-floor" x="24" y="120" width="204" height="136" rx="2"/>
+                    <rect class="room-glow" x="24" y="120" width="204" height="136" fill="url(#wallWash)"/>
+                    <g class="wall" fill="none">
+                        <path d="M20 20 H320 V260 H20 Z"/>
+                        <path d="M128 20 V112"/>
+                        <path d="M228 20 V260"/>
+                        <path d="M20 116 H228"/>
+                    </g>
+                    <rect x="78" y="112" width="26" height="8" fill="#070708"/>
+                    <text class="ghost-label" x="76" y="76" text-anchor="middle">Hall</text>
+                    <text class="ghost-label" x="180" y="76" text-anchor="middle">Kitchen</text>
+                    <text class="ghost-label" x="274" y="140" text-anchor="middle">Suite</text>
+                    <text class="active-label" x="40" y="142">Room</text>
+                </svg>
+                <button class="led-bar" data-light type="button" style="left:37%; top:88%" onclick="toggleRelay('r1')" aria-label="Toggle lights" aria-pressed="false">
+                    <span class="led-strip"></span>
+                </button>
+                <button class="pin fan-marker" data-fan data-fan-rotor type="button" style="left:37%; top:67%" onclick="toggleRelay('r2')" aria-label="Toggle ceiling fan" aria-pressed="false">
+                    <svg class="fan-svg" viewBox="0 0 24 24" aria-hidden="true">
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(90 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(180 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(270 12 12)"/>
+                        <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                    </svg>
+                </button>
             </div>
 
-            <!-- Relay 4 -->
-            <div class="relay-card">
-                <div class="relay-header">
-                    <span class="relay-title">Relay 4</span>
-                    <button id="btn-r4" class="relay-toggle btn-red" onclick="toggleRelay('r4')">OFF</button>
-                </div>
-                <div class="timer-controls">
-                    <span>Timer (s):</span>
-                    <input id="timer-input-r4" class="timer-input" type="number" min="1" max="86400" placeholder="sec">
-                    <button class="timer-btn" onclick="startCustomTimer('r4')">Start</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r4', 10)">10s</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r4', 60)">1m</button>
-                    <button class="timer-btn" onclick="startPresetTimer('r4', 300)">5m</button>
-                    <button class="timer-btn" onclick="cancelTimer('r4')">Cancel</button>
-                    <span id="timer-display-r4" style="margin-left: auto; color: var(--accent-blue);"></span>
+            <div class="scene hidden" id="map3d">
+                <div class="scene-caption">Room</div>
+                <div class="house">
+                    <div class="slab" style="left:0;top:0;width:108px;height:76px"></div>
+                    <div class="slab" style="left:116px;top:0;width:184px;height:76px"></div>
+                    <div class="slab" style="left:184px;top:84px;width:116px;height:140px"></div>
+                    <div class="room">
+                        <div class="floor"></div>
+                        <div class="wall back"><div class="window"></div></div>
+                        <div class="wall side"></div>
+                        <div class="glow"></div>
+                        <button class="led-bar" data-light type="button" onclick="toggleRelay('r1')" aria-label="Toggle lights" aria-pressed="false">
+                            <span class="led-strip"></span>
+                        </button>
+                        <button class="pin billboard fan-marker" data-fan data-fan-rotor type="button" style="left:50%; top:50%" onclick="toggleRelay('r2')" aria-label="Toggle ceiling fan" aria-pressed="false">
+                            <svg class="fan-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(90 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(180 12 12)"/>
+                        <ellipse cx="12" cy="5.5" rx="2.15" ry="4" fill="currentColor" transform="rotate(270 12 12)"/>
+                                <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
 
-    <main class="card hidden" id="settingsView">
-        <div class="key-block">
-            <p class="settings-note">The key stays in this browser only.</p>
-            <div class="settings-row">
-                <div class="relay-title">AIO key</div>
-                <input id="aioKeyInput" class="key-input" type="text" autocomplete="off" spellcheck="false" placeholder="aio_...">
-            </div>
-            <div class="settings-actions">
-                <button class="btn-blue" onclick="saveAioKey()">Save key</button>
-            </div>
+    <nav class="tabbar">
+        <button id="tabDash" class="active" type="button" onclick="showTab('dash')">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 3 10.2V20a1 1 0 0 0 1 1h5.2v-6.2h5.6V21H20a1 1 0 0 0 1-1v-9.8L12 3.2z"/></svg>
+            Dashboard
+        </button>
+        <button id="tabMap" type="button" onclick="showTab('map')">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 4.2 3.5 6.2A1 1 0 0 0 3 7.1V19.2l6-2.2 6 2.2 5.5-2a1 1 0 0 0 .5-.9V4.8l-6 2.2-6-2.8zm0 1.9 6 2.8v9.1l-6-2.2V6.1z"/></svg>
+            Map
+        </button>
+    </nav>
+</div>
+
+<div id="settingsSheet" class="hidden">
+    <button class="scrim" type="button" onclick="closeSettings()" aria-label="Close settings"></button>
+    <div class="sheet" role="dialog" aria-labelledby="settingsTitle">
+        <div class="sheet-grab"></div>
+        <h2 id="settingsTitle">Settings</h2>
+        <p class="note">The key stays in this browser only. Touch pads on GPIO 6 and GPIO 7 can toggle the lights or the fan.</p>
+        <div class="field">
+            <label for="aioKeyInput">AIO key</label>
+            <input id="aioKeyInput" class="key-input" type="text" autocomplete="off" spellcheck="false" placeholder="aio_...">
         </div>
-        <p class="settings-note">Disabled inputs are held low, so an unwired pin cannot trigger a relay. Each touch can toggle any relay.</p>
-        <div class="settings-row">
+        <div class="touch-row">
             <div>
-                <div class="relay-title">Touch 1</div>
-                <div class="gpio-label">GPIO 2</div>
+                <span>Touch 1</span>
+                <div class="meta">GPIO 6</div>
             </div>
             <select id="touch-map-0" class="touch-select" onchange="onTouchSelectChange()">
-                <option value="0">Disabled</option>
-                <option value="1">Relay 1</option>
-                <option value="2">Relay 2</option>
-                <option value="3">Relay 3</option>
-                <option value="4">Relay 4</option>
+                <option value="0">Off</option>
+                <option value="1">Lights</option>
+                <option value="2">Ceiling fan</option>
             </select>
         </div>
-        <div class="settings-row">
+        <div class="touch-row">
             <div>
-                <div class="relay-title">Touch 2</div>
-                <div class="gpio-label">GPIO 4</div>
+                <span>Touch 2</span>
+                <div class="meta">GPIO 7</div>
             </div>
             <select id="touch-map-1" class="touch-select" onchange="onTouchSelectChange()">
-                <option value="0">Disabled</option>
-                <option value="1">Relay 1</option>
-                <option value="2">Relay 2</option>
-                <option value="3">Relay 3</option>
-                <option value="4">Relay 4</option>
+                <option value="0">Off</option>
+                <option value="1">Lights</option>
+                <option value="2">Ceiling fan</option>
             </select>
         </div>
-        <div class="settings-row">
-            <div>
-                <div class="relay-title">Touch 3</div>
-                <div class="gpio-label">GPIO 6</div>
-            </div>
-            <select id="touch-map-2" class="touch-select" onchange="onTouchSelectChange()">
-                <option value="0">Disabled</option>
-                <option value="1">Relay 1</option>
-                <option value="2">Relay 2</option>
-                <option value="3">Relay 3</option>
-                <option value="4">Relay 4</option>
-            </select>
+        <div class="sheet-actions">
+            <button class="btn-blue" type="button" onclick="saveAioKey()">Save key</button>
+            <button class="btn-blue" type="button" onclick="saveTouchSettings()">Save touch</button>
+            <button class="btn-quiet" type="button" onclick="requestSnapshot()">Reload</button>
         </div>
-        <div class="settings-row">
-            <div>
-                <div class="relay-title">Touch 4</div>
-                <div class="gpio-label">GPIO 7</div>
-            </div>
-            <select id="touch-map-3" class="touch-select" onchange="onTouchSelectChange()">
-                <option value="0">Disabled</option>
-                <option value="1">Relay 1</option>
-                <option value="2">Relay 2</option>
-                <option value="3">Relay 3</option>
-                <option value="4">Relay 4</option>
-            </select>
-        </div>
-        <div class="settings-actions">
-            <button class="btn-blue" onclick="saveTouchSettings()">Save</button>
-        </div>
-    </main>
-
-    <div class="log-box" id="logBox">
-        <div class="log-entry">System ready. Timers run on the ESP; this page counts down from one snapshot.</div>
+        <div class="log-box" id="logBox"></div>
     </div>
 </div>
 
 <script>
     const USERNAME = "naguibamged";
-    const FEED_KEY = "control1"; // Lowercase feed key required by Adafruit IO REST API
+    const FEED_KEY = "control1";
     const AIO_STORAGE_KEY = "aioKey";
+    const DEVICES = ["r1", "r2"];
 
     let AIO_KEY = localStorage.getItem(AIO_STORAGE_KEY) || "";
     let keyMissingLogged = false;
@@ -471,14 +949,15 @@
     let currentStates = { r1: 0, r2: 0, r3: 0, r4: 0 };
     let deadlines = { r1: 0, r2: 0, r3: 0, r4: 0 };
     let lastAppliedId = null;
-    let touchMap = [0, 0, 0, 0];
+    let touchMap = [0, 0];
     let settingsDirty = false;
     let fillingTouch = false;
+    let roomOpen = false;
 
-    function log(message, type = 'info') {
-        const logBox = document.getElementById('logBox');
+    function log(message, type = "info") {
+        const logBox = document.getElementById("logBox");
         const time = new Date().toLocaleTimeString();
-        const entry = document.createElement('div');
+        const entry = document.createElement("div");
         entry.className = `log-entry ${type}`;
         entry.innerText = `[${time}] ${message}`;
         logBox.appendChild(entry);
@@ -547,16 +1026,16 @@
             });
 
             if (response.ok) {
-                log(`Sent: ${JSON.stringify(fields)}`, 'success');
+                log(`Sent: ${JSON.stringify(fields)}`, "success");
                 setOnlineStatus(true);
                 return true;
             }
 
             const err = await response.text();
-            log(`HTTP ${response.status} Error: ${err}`, 'error');
+            log(`HTTP ${response.status} Error: ${err}`, "error");
             setOnlineStatus(false);
         } catch (error) {
-            log(`Network Error: ${error.message}`, 'error');
+            log(`Network Error: ${error.message}`, "error");
             setOnlineStatus(false);
         }
         return false;
@@ -570,7 +1049,7 @@
             });
 
             if (!response.ok) {
-                log(`Failed to fetch latest state: HTTP ${response.status}`, 'error');
+                log(`Failed to fetch latest state: HTTP ${response.status}`, "error");
                 setOnlineStatus(false);
                 return null;
             }
@@ -580,7 +1059,7 @@
             if (!data || !data.value) return null;
             return data;
         } catch (error) {
-            log(`Failed to reach Adafruit IO: ${error.message}`, 'error');
+            log(`Failed to reach Adafruit IO: ${error.message}`, "error");
             setOnlineStatus(false);
             return null;
         }
@@ -609,26 +1088,46 @@
             }
         }
 
-        if (settingsDirty || !Array.isArray(parsed.touch) || parsed.touch.length < 4) {
+        if (settingsDirty || !Array.isArray(parsed.touch) || parsed.touch.length < 2) {
             return;
         }
 
-        touchMap = parsed.touch.slice(0, 4).map((value) => {
+        touchMap = parsed.touch.slice(0, 2).map((value) => {
             const relay = Number(value);
-            return relay >= 1 && relay <= 4 ? relay : 0;
+            return relay >= 1 && relay <= 2 ? relay : 0;
         });
         fillTouchSelects();
     }
 
-    function toggleView() {
-        const settings = document.getElementById("settingsView");
-        const showingSettings = settings.classList.contains("hidden");
-        if (showingSettings) {
-            document.getElementById("aioKeyInput").value = AIO_KEY;
-        }
-        settings.classList.toggle("hidden", !showingSettings);
-        document.getElementById("controlView").classList.toggle("hidden", showingSettings);
-        document.getElementById("viewToggle").innerText = showingSettings ? "Control" : "Settings";
+    function showTab(tab) {
+        const dash = tab === "dash";
+        document.getElementById("dashboardView").classList.toggle("hidden", !dash);
+        document.getElementById("mapView").classList.toggle("hidden", dash);
+        document.getElementById("tabDash").classList.toggle("active", dash);
+        document.getElementById("tabMap").classList.toggle("active", !dash);
+    }
+
+    function showMapMode(mode) {
+        const flat = mode === "2d";
+        document.getElementById("map2d").classList.toggle("hidden", !flat);
+        document.getElementById("map3d").classList.toggle("hidden", flat);
+        document.getElementById("mode2d").classList.toggle("active", flat);
+        document.getElementById("mode3d").classList.toggle("active", !flat);
+    }
+
+    function toggleRoom() {
+        roomOpen = !roomOpen;
+        document.getElementById("roomCard").classList.toggle("open", roomOpen);
+        document.getElementById("roomToggle").setAttribute("aria-expanded", roomOpen ? "true" : "false");
+    }
+
+    function openSettings() {
+        document.getElementById("aioKeyInput").value = AIO_KEY;
+        document.getElementById("settingsSheet").classList.remove("hidden");
+    }
+
+    function closeSettings() {
+        document.getElementById("settingsSheet").classList.add("hidden");
     }
 
     function fillTouchSelects() {
@@ -647,13 +1146,13 @@
 
     function saveTouchSettings() {
         const next = [];
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 2; i++) {
             const relay = Number(document.getElementById(`touch-map-${i}`).value);
-            next.push(relay >= 1 && relay <= 4 ? relay : 0);
+            next.push(relay >= 1 && relay <= 2 ? relay : 0);
         }
         touchMap = next;
         settingsDirty = false;
-        postPayload({ touch: next });
+        postPayload({ touch: next.concat([0, 0]) });
         log(`Touch map sent: ${JSON.stringify(next)}`);
     }
 
@@ -665,7 +1164,7 @@
         try {
             parsed = JSON.parse(data.value);
         } catch (error) {
-            log("Feed value is not JSON", 'error');
+            log("Feed value is not JSON", "error");
             return false;
         }
 
@@ -675,7 +1174,7 @@
             applyDeviceSnapshot(parsed, Date.parse(data.created_at));
             updateUI();
             refreshCountdownLabels();
-            log(`Device snapshot: ${data.value}`, 'success');
+            log(`Device snapshot: ${data.value}`, "success");
             return true;
         }
 
@@ -717,10 +1216,11 @@
             }
         }
 
-        log("Snapshot not received yet. State will update on the next poll.", 'error');
+        log("Snapshot not received yet. State will update on the next poll.", "error");
     }
 
     function toggleRelay(relay) {
+        if (!DEVICES.includes(relay)) return;
         const next = currentStates[relay] === 1 ? 0 : 1;
         currentStates[relay] = next;
         deadlines[relay] = 0;
@@ -733,23 +1233,11 @@
         postPayload(payload);
     }
 
-    function setAllRelays(val) {
-        const payload = {};
-        for (const key of RELAYS) {
-            currentStates[key] = val;
-            deadlines[key] = 0;
-            payload[key] = val;
-            payload[timerKey(key)] = 0;
-        }
-        updateUI();
-        refreshCountdownLabels();
-        postPayload(payload);
-    }
-
     function startTimer(relay, seconds) {
+        if (!DEVICES.includes(relay)) return;
         seconds = Math.floor(Number(seconds));
         if (!Number.isFinite(seconds) || seconds < 1) {
-            log(`Enter a timer between 1 and ${MAX_TIMER_SECONDS} seconds`, 'error');
+            log(`Enter a timer between 1 and ${MAX_TIMER_SECONDS} seconds`, "error");
             return;
         }
         if (seconds > MAX_TIMER_SECONDS) seconds = MAX_TIMER_SECONDS;
@@ -776,6 +1264,7 @@
     }
 
     function cancelTimer(relay) {
+        if (!DEVICES.includes(relay)) return;
         deadlines[relay] = 0;
         refreshCountdownLabels();
         const payload = {};
@@ -788,7 +1277,7 @@
         const now = Date.now();
         let relaysChanged = false;
 
-        for (const key of RELAYS) {
+        for (const key of DEVICES) {
             const display = document.getElementById(`timer-display-${key}`);
             const deadline = deadlines[key];
             if (!deadline || deadline <= now) {
@@ -799,8 +1288,8 @@
                         relaysChanged = true;
                     }
                 }
-                display.innerText = "";
-            } else {
+                if (display) display.innerText = "";
+            } else if (display) {
                 display.innerText = formatLeft(deadline - now);
             }
         }
@@ -809,36 +1298,74 @@
     }
 
     function updateUI() {
-        for (let i = 1; i <= 4; i++) {
-            const key = `r${i}`;
-            const btn = document.getElementById(`btn-${key}`);
-            if (currentStates[key] === 1) {
-                btn.innerText = "ON";
-                btn.className = "relay-toggle btn-green";
-            } else {
-                btn.innerText = "OFF";
-                btn.className = "relay-toggle btn-red";
-            }
-        }
+        const lightsOn = currentStates.r1 === 1;
+        const fanOn = currentStates.r2 === 1;
+
+        const row1 = document.getElementById("row-r1");
+        const row2 = document.getElementById("row-r2");
+        row1.classList.toggle("is-on", lightsOn);
+        row2.classList.toggle("is-on", fanOn);
+        row1.setAttribute("aria-pressed", lightsOn ? "true" : "false");
+        row2.setAttribute("aria-pressed", fanOn ? "true" : "false");
+        document.getElementById("state-r1").textContent = lightsOn ? "On" : "Off";
+        document.getElementById("state-r2").textContent = fanOn ? "On" : "Off";
+
+        document.getElementById("chip-lights").classList.toggle("is-on", lightsOn);
+        document.getElementById("chip-fan").classList.toggle("is-on", fanOn);
+        document.getElementById("chip-lights-text").textContent = lightsOn ? "1 on" : "0 on";
+        document.getElementById("chip-fan-text").textContent = fanOn ? "On" : "Off";
+
+        document.getElementById("icon-lights").classList.toggle("show", lightsOn);
+        document.getElementById("icon-fan").classList.toggle("show", fanOn);
+
+        const brief = lightsOn && fanOn
+            ? "Lights and fan on"
+            : lightsOn
+                ? "Lights on"
+                : fanOn
+                    ? "Fan on"
+                    : "All off";
+        document.getElementById("roomBrief").textContent = brief;
+
+        document.getElementById("map2d").classList.toggle("lit", lightsOn);
+        document.getElementById("map3d").classList.toggle("lit", lightsOn);
+
+        document.querySelectorAll("[data-light]").forEach((el) => {
+            el.classList.toggle("is-on", lightsOn);
+            if (el.tagName === "BUTTON") el.setAttribute("aria-pressed", lightsOn ? "true" : "false");
+        });
+        document.querySelectorAll("[data-fan]").forEach((el) => {
+            el.classList.toggle("is-on", fanOn);
+            if (el.tagName === "BUTTON") el.setAttribute("aria-pressed", fanOn ? "true" : "false");
+        });
+        document.querySelectorAll("[data-fan-rotor]").forEach((el) => {
+            el.classList.toggle("spin", fanOn);
+        });
     }
 
     function setOnlineStatus(online) {
-        const badge = document.getElementById('statusBadge');
-        const text = document.getElementById('statusText');
+        const badge = document.getElementById("statusBadge");
+        const text = document.getElementById("statusText");
+        const hint = document.getElementById("keyHint");
         if (online) {
-            badge.className = "status-badge online";
-            text.innerText = "Connected";
+            badge.className = "status-pill online";
+            text.innerText = "Live";
         } else {
-            badge.className = "status-badge";
-            text.innerText = "Offline / Error";
+            badge.className = "status-pill";
+            text.innerText = AIO_KEY ? "Offline" : "No key";
         }
+        if (hint) hint.classList.toggle("hidden", Boolean(AIO_KEY));
     }
 
-    // One device snapshot on load. The 10s poll only reads; the countdown is local.
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeSettings();
+    });
+
+    updateUI();
+    setOnlineStatus(false);
     requestSnapshot();
     setInterval(fetchCloudState, 10000);
     setInterval(refreshCountdownLabels, 1000);
 </script>
-
 </body>
 </html>
