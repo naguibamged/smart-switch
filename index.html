@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My home</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Cpath fill='%23fff' transform='translate(4 4)' d='M12 3.2 3 10.2V20a1 1 0 0 0 1 1h5.2v-6.2h5.6V21H20a1 1 0 0 0 1-1v-9.8L12 3.2z'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Cpath fill='%23fff' transform='translate(4 4)' d='M12 3.2 3 10.2V20a1 1 0 0 0 1 1h5.2v-6.2h5.6V21H20a1 1 0 0 0 1-1v-9.8L12 3.2z'/%3E%3C/svg%3E">
     <style>
         :root {
             --bg: #000;
@@ -647,7 +649,41 @@
         .touch-row .meta { color: var(--muted); font-size: 0.75rem; }
         .touch-row .touch-select { width: auto; min-width: 140px; }
 
-        .sheet-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .sheet-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+        .preset-buttons { display: contents; }
+
+        .preset-block {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
+        }
+
+        .preset-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .preset-head button:disabled { opacity: 0.4; }
+
+        .preset-edit {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .preset-edit input {
+            width: 88px;
+            background: #0c0c0e;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+        }
+
+        .preset-edit span { color: var(--muted); font-size: 0.8rem; }
 
         .btn-blue, .btn-quiet {
             border-radius: 12px;
@@ -765,9 +801,7 @@
                             <span>Off in</span>
                             <input id="timer-input-r1" class="timer-input" type="number" min="1" max="86400" placeholder="sec" aria-label="Lights timer seconds">
                             <button class="timer-btn" type="button" onclick="startCustomTimer('r1')">Start</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 10)">10s</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 60)">1m</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r1', 300)">5m</button>
+                            <span class="preset-buttons" id="presets-r1"></span>
                             <button class="timer-btn" type="button" onclick="cancelTimer('r1')">Cancel</button>
                             <span id="timer-display-r1" class="timer-left"></span>
                         </div>
@@ -793,9 +827,7 @@
                             <span>Off in</span>
                             <input id="timer-input-r2" class="timer-input" type="number" min="1" max="86400" placeholder="sec" aria-label="Ceiling fan timer seconds">
                             <button class="timer-btn" type="button" onclick="startCustomTimer('r2')">Start</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 10)">10s</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 60)">1m</button>
-                            <button class="timer-btn" type="button" onclick="startPresetTimer('r2', 300)">5m</button>
+                            <span class="preset-buttons" id="presets-r2"></span>
                             <button class="timer-btn" type="button" onclick="cancelTimer('r2')">Cancel</button>
                             <span id="timer-display-r2" class="timer-left"></span>
                         </div>
@@ -925,6 +957,22 @@
                 <option value="2">Ceiling fan</option>
             </select>
         </div>
+        <div class="preset-block">
+            <div class="preset-head">
+                <strong>Lights</strong>
+                <button class="btn-quiet" type="button" id="add-preset-r1" onclick="addPreset('r1')">Add</button>
+                <button class="btn-quiet" type="button" onclick="resetPresets('r1')">Reset</button>
+            </div>
+            <div id="preset-editor-r1"></div>
+        </div>
+        <div class="preset-block">
+            <div class="preset-head">
+                <strong>Ceiling fan</strong>
+                <button class="btn-quiet" type="button" id="add-preset-r2" onclick="addPreset('r2')">Add</button>
+                <button class="btn-quiet" type="button" onclick="resetPresets('r2')">Reset</button>
+            </div>
+            <div id="preset-editor-r2"></div>
+        </div>
         <div class="sheet-actions">
             <button class="btn-blue" type="button" onclick="saveAioKey()">Save key</button>
             <button class="btn-blue" type="button" onclick="saveTouchSettings()">Save touch</button>
@@ -939,6 +987,10 @@
     const FEED_KEY = "control1";
     const AIO_STORAGE_KEY = "aioKey";
     const VIEW_STORAGE_KEY = "homeView";
+    const PRESET_STORAGE_KEY = "timerPresets";
+    const DEFAULT_PRESETS = [1800, 3600, 28800];
+    const MAX_PRESETS = 6;
+    const MAX_PRESET_MINUTES = 1440;
     const DEVICES = ["r1", "r2"];
 
     let AIO_KEY = localStorage.getItem(AIO_STORAGE_KEY) || "";
@@ -953,6 +1005,124 @@
     let touchMap = [0, 0];
     let settingsDirty = false;
     let fillingTouch = false;
+    let timerPresets = {
+        r1: DEFAULT_PRESETS.slice(),
+        r2: DEFAULT_PRESETS.slice()
+    };
+
+    function presetList(value) {
+        if (!Array.isArray(value)) return null;
+        const next = value
+            .map((seconds) => Math.floor(Number(seconds)))
+            .filter((seconds) => seconds >= 60 && seconds <= MAX_TIMER_SECONDS)
+            .map((seconds) => Math.floor(seconds / 60) * 60)
+            .slice(0, MAX_PRESETS);
+        return next.length ? next : null;
+    }
+
+    function loadPresets() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(PRESET_STORAGE_KEY) || "");
+            timerPresets = {
+                r1: presetList(parsed && parsed.r1) || DEFAULT_PRESETS.slice(),
+                r2: presetList(parsed && parsed.r2) || DEFAULT_PRESETS.slice()
+            };
+        } catch (error) {
+            timerPresets = {
+                r1: DEFAULT_PRESETS.slice(),
+                r2: DEFAULT_PRESETS.slice()
+            };
+        }
+    }
+
+    function presetLabel(seconds) {
+        const total = Math.max(0, Math.round(seconds));
+        const hours = Math.floor(total / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
+        if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+        if (hours > 0) return `${hours}h`;
+        if (minutes > 0) return `${minutes}m`;
+        return `${total}s`;
+    }
+
+    function renderPresetButtons() {
+        for (const relay of DEVICES) {
+            const box = document.getElementById(`presets-${relay}`);
+            box.replaceChildren();
+            for (const seconds of timerPresets[relay]) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "timer-btn";
+                button.textContent = presetLabel(seconds);
+                button.addEventListener("click", () => startPresetTimer(relay, seconds));
+                box.appendChild(button);
+            }
+        }
+    }
+
+    function renderPresetEditors() {
+        for (const relay of DEVICES) {
+            const editor = document.getElementById(`preset-editor-${relay}`);
+            const add = document.getElementById(`add-preset-${relay}`);
+            editor.replaceChildren();
+            timerPresets[relay].forEach((seconds, index) => {
+                const row = document.createElement("div");
+                row.className = "preset-edit";
+                const input = document.createElement("input");
+                input.type = "number";
+                input.min = "1";
+                input.max = String(MAX_PRESET_MINUTES);
+                input.value = String(seconds / 60);
+                input.setAttribute("aria-label", `${relay === "r1" ? "Lights" : "Ceiling fan"} shortcut ${index + 1} minutes`);
+                input.addEventListener("change", () => editPreset(relay, index, input.value));
+                const unit = document.createElement("span");
+                unit.textContent = "min";
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "btn-quiet";
+                remove.textContent = "Remove";
+                remove.addEventListener("click", () => removePreset(relay, index));
+                row.append(input, unit, remove);
+                editor.appendChild(row);
+            });
+            if (add) add.disabled = timerPresets[relay].length >= MAX_PRESETS;
+        }
+    }
+
+    function savePresets() {
+        localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(timerPresets));
+        renderPresetButtons();
+        renderPresetEditors();
+    }
+
+    function addPreset(relay) {
+        if (!DEVICES.includes(relay) || timerPresets[relay].length >= MAX_PRESETS) return;
+        timerPresets[relay].push(15 * 60);
+        savePresets();
+    }
+
+    function editPreset(relay, index, minutes) {
+        const value = Math.floor(Number(minutes));
+        if (!Number.isFinite(value) || value < 1 || value > MAX_PRESET_MINUTES) {
+            renderPresetEditors();
+            return;
+        }
+        timerPresets[relay][index] = value * 60;
+        savePresets();
+    }
+
+    function removePreset(relay, index) {
+        timerPresets[relay].splice(index, 1);
+        if (!timerPresets[relay].length) timerPresets[relay] = DEFAULT_PRESETS.slice();
+        savePresets();
+    }
+
+    function resetPresets(relay) {
+        if (!DEVICES.includes(relay)) return;
+        timerPresets[relay] = DEFAULT_PRESETS.slice();
+        savePresets();
+    }
+
     let roomOpen = false;
     let viewState = { tab: "dash", map: "2d", roomOpen: false };
 
@@ -1002,8 +1172,10 @@
 
     function formatLeft(ms) {
         const total = Math.max(0, Math.ceil(ms / 1000));
-        const minutes = Math.floor(total / 60);
+        const hours = Math.floor(total / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
         const seconds = total % 60;
+        if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
         if (minutes <= 0) return `${seconds}s`;
         return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
     }
@@ -1389,6 +1561,9 @@
         if (event.key === "Escape") closeSettings();
     });
 
+    loadPresets();
+    renderPresetButtons();
+    renderPresetEditors();
     readView();
     roomOpen = viewState.roomOpen;
     showTab(viewState.tab);
